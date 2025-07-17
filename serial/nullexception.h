@@ -3,7 +3,9 @@
 
 #include <QException>
 
-class NullException : public QException
+#include "serial_global.h"
+
+class SERIAL_EXPORT NullException : public QException
 {
 public:
     explicit NullException(QString msg = "");

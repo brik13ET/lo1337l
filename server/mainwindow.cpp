@@ -16,11 +16,18 @@ MainWindow::MainWindow(QWidget *parent)
     );
 }
 
+
+
 MainWindow::~MainWindow()
 {
     disconnect(
         ui->comList, &QListWidget::activated,
         this,        &MainWindow::setCom
+    );
+
+    disconnect(
+        actor, &ServerActor::recived,
+        this , &MainWindow::showMsg
     );
     delete ui;
 }
@@ -33,5 +40,16 @@ void MainWindow::setCom(const QModelIndex &index)
     auto serial = new Serial(port);
     actor = new ServerActor(serial, 0);
     actor->start();
+
+
+    connect(
+        actor, &ServerActor::recived,
+        this , &MainWindow::showMsg
+    );
+}
+
+void MainWindow::showMsg(Serial::Message msg)
+{
+    ui->msgList->addItem(msg.toString());
 }
 

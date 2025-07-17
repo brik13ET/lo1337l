@@ -73,12 +73,13 @@ public:
 
     explicit Serial(QSerialPort*, QObject* parent = nullptr);
     ~Serial();
-    void txd(Message);
-    explicit operator QSerialPort&();
+    void transmit(Message);
+    QSerialPort& getPort();
     static QStringList getComs();
 
 signals:
     void rxd(Message);
+    void txd(Message);
 
 };
 

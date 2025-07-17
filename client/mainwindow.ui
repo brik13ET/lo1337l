@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Client</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -65,7 +65,7 @@
            <number>255</number>
           </property>
           <property name="value">
-           <number>171</number>
+           <number>31</number>
           </property>
           <property name="displayIntegerBase">
            <number>16</number>
@@ -102,7 +102,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QSlider" name="horizontalSlider_2">
+       <widget class="QSlider" name="atten2">
         <property name="maximum">
          <number>65535</number>
         </property>
@@ -140,7 +140,7 @@
      <x>0</x>
      <y>0</y>
      <width>615</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

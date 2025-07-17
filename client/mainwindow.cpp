@@ -5,6 +5,8 @@
 #include <QAbstractItemView>
 #include <QDebug>
 #include <QCheckBox>
+#include <rangeexception.h>
+#include <nullexception.h>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -25,24 +27,30 @@ MainWindow::MainWindow(QWidget *parent)
     ui->listViewMsg ->setModel(strMsg );
 
     connect(
-        ui->listViewComs, SIGNAL(activated()),
-        this, SLOT(on_listViewComs_activated())
+        ui->listViewComs, &QListView::activated,
+        this, &MainWindow::on_listViewComs_activated
     );
 
+    connect(
+        ui->atten1, &QSlider::valueChanged,
+        this      , &MainWindow::on_anten1_value
+    );
+    connect(
+        ui->atten2, &QSlider::valueChanged,
+        this      , &MainWindow::on_anten2_value
+    );
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 8; ++j) {
             auto cb = new QCheckBox(QString("(%1 %2)").arg(i).arg(j));
-            auto cbCall = [this](){
-                Serial::Message msg (
-                    this->getAddr(),
-                    Serial::Message::setSettings().cmd,
-                    Serial::Message::setSettings().op,
-                    this->settings
-                );
-                this->serial->txd(msg);
+            auto cbCall = [this, i, j](int state){
+                if (state == Qt::CheckState::Checked)
+                    this->settings.output[i] |= (state == Qt::CheckState::Checked) << j;
+                else
+                    this->settings.output[i] = this->settings.output[i] & ~((state != Qt::CheckState::Checked) << j);
+                this->send_state();
             };
-            ui->gridLayout->addWidget(cb);
-            connect(cb, &QCheckBox::stateChanged, cbCall);
+            ui->gridLayout->addWidget(cb, j, i);
+            connect(cb, &QCheckBox::stateChanged, this, cbCall);
         }
     }
 }
@@ -50,8 +58,17 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     disconnect(
-        ui->listViewComs, SIGNAL(activated()),
-        this, SLOT(on_listViewComs_activated())
+        ui->listViewComs, &QListView::activated,
+        this, &MainWindow::on_listViewComs_activated
+    );
+
+    disconnect(
+        ui->atten1, &QSlider::valueChanged,
+        this      , &MainWindow::on_anten1_value
+    );
+    disconnect(
+        ui->atten2, &QSlider::valueChanged,
+        this      , &MainWindow::on_anten2_value
     );
     delete ui;
 }
@@ -72,16 +89,28 @@ void MainWindow::on_listViewComs_activated(const QModelIndex &index)
 {
     qDebug() << __FUNCTION__;
     qDebug() << "this: " << this;
-    if (this->serial != nullptr)
+    if (this->serial != nullptr){
+        disconnect(
+             serial, &Serial::rxd,
+             this,   &MainWindow::on_serial_rxd
+         );
+
+
+        disconnect(
+             serial, &Serial::txd,
+             this,   &MainWindow::on_serial_rxd
+         );
         static_cast<QSerialPort>(this->serial).close();
+        delete this->serial;
+    }
 
     auto port = new QSerialPort(index.data().toString());
     this->serial = new Serial(port);
 
     qDebug() << "this->serial: " << this->serial;
-    qDebug() << "QSerialPort: " << static_cast<QSerialPort>(this->serial).isOpen();
+    qDebug() << "QSerialPort->isOpen(): " << port->isOpen();
 
-    serial->txd(
+    serial->transmit(
                 Serial::Message (
                     getAddr(),
                     Serial::Message::handshake().cmd,
@@ -91,6 +120,12 @@ void MainWindow::on_listViewComs_activated(const QModelIndex &index)
 
     connect(
          serial, &Serial::rxd,
+         this,   &MainWindow::on_serial_rxd
+     );
+
+
+    connect(
+         serial, &Serial::txd,
          this,   &MainWindow::on_serial_rxd
      );
 }
@@ -106,5 +141,39 @@ void MainWindow::on_serial_rxd(Serial::Message msg)
         QModelIndex index = strMsg->index(0, 0);
         strMsg->setData(index, msgStr);
     }
+}
+
+void MainWindow::on_anten1_value(int value)
+{
+    this->settings.attenuator[0] = value;
+    send_state();
+}
+
+void MainWindow::on_anten2_value(int value)
+{
+    this->settings.attenuator[1] = value;
+    send_state();
+}
+
+void MainWindow::send_state()
+{
+    try {
+        Serial::Message msg (
+            this->getAddr(),
+            Serial::Message::setSettings().cmd,
+            Serial::Message::setSettings().op,
+            this->settings
+        );
+        if (serial == nullptr)
+            throw new NullException("`Serial` is null, probably port isnt open");
+        serial->transmit(msg);
+    } catch (RangeException e) {
+        qDebug() << e.what();
+        return ;
+    } catch (NullException e) {
+        qDebug() << e.what();
+        return ;
+    }
+
 }
 

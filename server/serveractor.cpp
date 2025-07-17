@@ -8,6 +8,12 @@ ServerActor::ServerActor(Serial* serial, uint8_t addr)
 {
 }
 
+void ServerActor::rxd(Serial::Message msg)
+{
+    Actor::rxd(msg);
+    emit recived(msg);
+}
+
 // Emulate changing state
 void ServerActor::run()
 {

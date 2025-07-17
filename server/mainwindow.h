@@ -21,5 +21,7 @@ private:
     void setCom(const QModelIndex &index);
     ServerActor* actor;
     Ui::MainWindow *ui;
+
+    void showMsg(Serial::Message);
 };
 #endif // MAINWINDOW_H

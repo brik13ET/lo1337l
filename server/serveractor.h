@@ -17,6 +17,12 @@ public:
     void setPort();
     QStringList getComs();
     ServerActor(Serial *serial, uint8_t addr);
+
+protected:
+    void rxd(Serial::Message);
+
+signals:
+    void recived(Serial::Message);
 };
 
 #endif // SERVERACTOR_H

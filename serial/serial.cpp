@@ -30,6 +30,8 @@ SERIAL_EXPORT Serial::Serial(QSerialPort* port, QObject* parent)
     if (this->port == nullptr)
         throw new NullException("Argument null: Serial::Serial(null)");
     port->open(QSerialPort::ReadWrite);
+
+    qDebug() << "port->isOpen(): " << port->isOpen();
     connect(
         this->port, &QSerialPort::readyRead,
         this,       &Serial::parse
@@ -42,14 +44,18 @@ Serial::~Serial()
         this->port, &QSerialPort::readyRead,
         this,       &Serial::parse
     );
+    this->port->close();
 }
 
-SERIAL_EXPORT void Serial::txd(Serial::Message msg)
+SERIAL_EXPORT void Serial::transmit(Serial::Message msg)
 {
-    this->port->write(static_cast<QByteArray>(msg));
+    if (!port->isOpen())
+        throw new NullException("Port is closed");
+    port->write(static_cast<QByteArray>(msg));
+    emit txd(msg);
 }
 
-SERIAL_EXPORT Serial::operator QSerialPort &()
+SERIAL_EXPORT QSerialPort& Serial::getPort()
 {
     return *port;
 }
@@ -91,7 +97,6 @@ SERIAL_EXPORT Serial::Message::Message(uint8_t Address, uint8_t CmdNo, uint8_t M
     if (CmdNo > 3          || CmdNo < 0         ) throw new RangeException(3,  0);
     if (Meta > 1           || Meta < 0          ) throw new RangeException(1,  0);
     if (Data.length() > 64 || Data.length() < 0 ) throw new RangeException(64, 0);
-
 }
 
 SERIAL_EXPORT Serial::Message::operator QByteArray()

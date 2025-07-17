@@ -25,6 +25,9 @@ private slots:
     void on_serial_rxd(Serial::Message);
 
 private:
+    void on_anten1_value(int);
+    void on_anten2_value(int);
+    void send_state();
     Serial* serial;
     Ui::MainWindow *ui;
     QStringListModel* strComs;
