@@ -22,6 +22,7 @@ protected:
 
 signals:
     void recived(Serial::Message);
+    void newState(QByteArray);
 };
 
 #endif // SERVERACTOR_H

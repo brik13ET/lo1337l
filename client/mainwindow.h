@@ -23,11 +23,12 @@ public:
 private slots:
     void on_listViewComs_activated(const QModelIndex &index);
     void on_serial_rxd(Serial::Message);
+    void request_state(bool checked = false);
 
 private:
     void on_anten1_value(int);
     void on_anten2_value(int);
-    void send_state();
+    void set_settings_msg();
     Serial* serial;
     Ui::MainWindow *ui;
     QStringListModel* strComs;

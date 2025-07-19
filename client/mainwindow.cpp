@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
                     this->settings.output[i] |= (state == Qt::CheckState::Checked) << j;
                 else
                     this->settings.output[i] = this->settings.output[i] & ~((state != Qt::CheckState::Checked) << j);
-                this->send_state();
+                this->set_settings_msg();
             };
             ui->gridLayout->addWidget(cb, j, i);
             connect(cb, &QCheckBox::stateChanged, this, cbCall);
@@ -123,34 +123,45 @@ void MainWindow::on_listViewComs_activated(const QModelIndex &index)
          serial, &Serial::txd,
          this,   &MainWindow::on_serial_rxd
      );
+    connect(
+        ui->pushButton, &QPushButton::clicked,
+        this,           &MainWindow::request_state
+    );
 }
 
 void MainWindow::on_serial_rxd(Serial::Message msg)
 {
-    auto msgStr = QString ("Addr: %1, CN: %2, MT: %3\n%4")
-            .arg(msg.getAddress())
-            .arg(msg.getCmdNo())
-            .arg(msg.getMeta())
-            .arg(QString(msg.getData().toHex()));
     if (strMsg->insertRow(0)) {
         QModelIndex index = strMsg->index(0, 0);
-        strMsg->setData(index, msgStr);
+        strMsg->setData(index, msg.toString());
     }
+}
+
+void MainWindow::request_state(bool checked)
+{
+    Serial::Message msg (
+        this->getAddr(),
+        Serial::Message::getState().cmd,
+        Serial::Message::getState().op,
+        QByteArray()
+    );
+
+    serial->transmit(msg);
 }
 
 void MainWindow::on_anten1_value(int value)
 {
     this->settings.attenuator[0] = value;
-    send_state();
+    set_settings_msg();
 }
 
 void MainWindow::on_anten2_value(int value)
 {
     this->settings.attenuator[1] = value;
-    send_state();
+    set_settings_msg();
 }
 
-void MainWindow::send_state()
+void MainWindow::set_settings_msg()
 {
     try {
         Serial::Message msg (

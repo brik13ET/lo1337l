@@ -32,6 +32,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
 
     }
+
+
 }
 
 void MainWindow::addressChanged(const QString &)
@@ -53,6 +55,52 @@ MainWindow::~MainWindow()
         this , &MainWindow::showMsg
     );
     delete ui;
+}
+
+void MainWindow::stateChanged(QByteArray st_)
+{
+    Actor::State st(st_);
+
+    float tempf = 0.f, voltf = 0.f;
+
+    tempf = (st.temp + 0.f) / UINT16_MAX;
+    tempf = (ui->Temp->minimum()) + tempf * ((ui->Temp->maximum())-(ui->Temp->minimum()));
+
+    voltf = (st.voltage + 0.f) / UINT16_MAX;
+    voltf = (ui->Volt->minimum()) + voltf * ((ui->Volt->maximum())-(ui->Volt->minimum()));
+
+    ui->Temp->setValue(tempf / 0.5f);
+    ui->Volt->setValue(voltf / 0.1f);
+
+    ui->temp_label->setText(
+        QString("Temp %1 C")
+            .arg(
+                tempf,
+                7
+    ));
+
+
+    ui->voltage_label->setText(
+        QString("Volt %1 V")
+            .arg(
+                voltf,
+                7
+    ));
+
+    Qt::CheckState checkedLookup[] = {
+        Qt::Unchecked,
+        Qt::Checked
+    };
+
+    ui->Module_OK->setCheckState(checkedLookup[st.parts.Module  ]);
+    ui->PSU_OK   ->setCheckState(checkedLookup[st.parts.PSU     ]);
+    ui->Temp_OK  ->setCheckState(checkedLookup[st.parts.TempSens]);
+    ui->Volt_OK  ->setCheckState(checkedLookup[st.parts.VSens   ]);
+    ui->Atten1_OK->setCheckState(checkedLookup[st.parts.Atten1  ]);
+    ui->Atten2_OK->setCheckState(checkedLookup[st.parts.Atten2  ]);
+    ui->Res      ->setCheckState(checkedLookup[st.parts.Res     ]);
+    ui->MajorV   ->setValue(st.ver.major);
+    ui->MinorV   ->setValue(st.ver.minor);
 }
 
 void MainWindow::setCom(const QModelIndex &index)
@@ -78,6 +126,12 @@ void MainWindow::setCom(const QModelIndex &index)
     connect(
         actor, &ServerActor::recived,
         this , &MainWindow::attenUpdate
+    );
+
+
+    connect(
+        this->actor, &ServerActor::newState,
+        this       , &MainWindow  ::stateChanged
     );
 
     for (int i = 0; i < 2; ++i) {
@@ -112,8 +166,8 @@ void MainWindow::setCom(const QModelIndex &index)
 
             connect(
                 this->actor, &ServerActor::recived,
-                this       , cbCall);
-
+                this       , cbCall
+            );
         }
     }
 }

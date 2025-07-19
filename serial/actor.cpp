@@ -56,6 +56,7 @@ SERIAL_EXPORT void Actor::rxd(Serial::Message msg)
 
     auto method = lookupCmd[msg.getCmdNo()];
     Serial::Message ret = (this->*method)(msg);
+    con->transmit(ret);
 }
 
 SERIAL_EXPORT Serial::Message Actor::handshakeMsg(Serial::Message msg)

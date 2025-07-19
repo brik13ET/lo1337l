@@ -18,6 +18,7 @@ public:
     ~MainWindow();
 
 protected slots:
+    void stateChanged(QByteArray);
     void addressChanged(const QString &);
     void setCom(const QModelIndex &index);
     void attenUpdate(Serial::Message);
