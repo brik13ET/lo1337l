@@ -17,8 +17,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private:
+protected slots:
+    void addressChanged(const QString &);
     void setCom(const QModelIndex &index);
+    void attenUpdate(Serial::Message);
+private:
     ServerActor* actor;
     Ui::MainWindow *ui;
 

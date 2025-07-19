@@ -72,10 +72,13 @@ public:
     };
 
     explicit Serial(QSerialPort*, QObject* parent = nullptr);
+    explicit Serial(QString, QObject* parent = nullptr);
     ~Serial();
     void transmit(Message);
     QSerialPort& getPort();
     static QStringList getComs();
+
+
 
 signals:
     void rxd(Message);

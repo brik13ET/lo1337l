@@ -8,9 +8,9 @@
 SERIAL_EXPORT
 const std::array<Serial::Message (Actor::*)(Serial::Message), 3>
     Actor::lookupCmd = {{
-        &Actor::handshake,
-        &Actor::getState ,
-        &Actor::setSettings ,
+        &Actor::handshakeMsg,
+        &Actor::getStateMsg ,
+        &Actor::setSettingsMsg ,
 }};
 
 SERIAL_EXPORT Actor::Actor(Serial* con, uint8_t addr)
@@ -22,6 +22,16 @@ SERIAL_EXPORT Actor::Actor(Serial* con, uint8_t addr)
         this,&Actor::rxd
     );
 }
+
+Actor::Actor(QSerialPort * sport, uint8_t addr)
+    : addr(addr)
+    , con (new Serial(sport))
+{ }
+
+Actor::Actor(QString nport, uint8_t addr)
+    : addr(addr)
+    , con (new Serial(nport))
+{ }
 
 SERIAL_EXPORT Actor::~Actor()
 {
@@ -37,11 +47,18 @@ SERIAL_EXPORT void Actor::rxd(Serial::Message msg)
         qDebug() << QString("Unknown command: \"%1\"").arg(msg.getCmdNo());
         return;
     }
+    if (msg.getAddress() != addr)
+    {
+        qDebug() << QString("Address unmatch: \"%1\" != \"%2\"")
+                    .arg(msg.getAddress()).arg(addr);
+        return;
+    }
+
     auto method = lookupCmd[msg.getCmdNo()];
     Serial::Message ret = (this->*method)(msg);
 }
 
-SERIAL_EXPORT Serial::Message Actor::handshake(Serial::Message msg)
+SERIAL_EXPORT Serial::Message Actor::handshakeMsg(Serial::Message msg)
 {
 
     return Serial::Message (
@@ -52,7 +69,7 @@ SERIAL_EXPORT Serial::Message Actor::handshake(Serial::Message msg)
     );
 }
 
-SERIAL_EXPORT Serial::Message Actor::getState(Serial::Message msg)
+SERIAL_EXPORT Serial::Message Actor::getStateMsg(Serial::Message msg)
 {
     // Build `State` package
     auto state = static_cast<QByteArray>(this->state);
@@ -63,29 +80,31 @@ SERIAL_EXPORT Serial::Message Actor::getState(Serial::Message msg)
     return msg;
 }
 
-SERIAL_EXPORT Serial::Message Actor::setSettings(Serial::Message msg)
+SERIAL_EXPORT Serial::Message Actor::setSettingsMsg(Serial::Message msg)
 {
     auto pkg = msg.getData();
-    QByteArray outp(
-                const_cast<const char*>(
-                    (char *)&this->settings.output[0]
-                ),
-                sizeof(this->settings.output)/
-                sizeof(this->settings.output[0])
-    );
-    outp.replace(0, outp.length(), pkg.mid(0, outp.length()));
 
-    QByteArray atenn(
-                const_cast<const char*>(
-                    (char *)&this->settings.attenuator[0]
-                ),
-                sizeof(this->settings.attenuator)/
-                sizeof(this->settings.attenuator[0])
+    memcpy(
+        settings.output,
+        pkg.mid(0, sizeof(settings.output)).constData(),
+        sizeof(settings.output)
     );
-    atenn.replace(0, atenn.length(), pkg.mid(2, atenn.length()));
+
+
+    memcpy(
+        settings.attenuator,
+        pkg.mid(2, sizeof(settings.attenuator)).constData(),
+        sizeof(settings.attenuator)
+    );
+
     msg.setMeta (Serial::Message::setSettings().op );
     msg.setCmdNo(Serial::Message::setSettings().cmd);
     return msg;
+}
+
+uint8_t Actor::getAddress()
+{
+    return addr;
 }
 
 SERIAL_EXPORT Actor::State::operator QByteArray()

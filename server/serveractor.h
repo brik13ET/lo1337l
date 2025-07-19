@@ -7,14 +7,13 @@
 class ServerActor : public Actor
 {
     Q_OBJECT
-private:
-    Serial* port;
-    uint8_t* address;
-
 public:
     void run() override;
-    void setAddress();
-    void setPort();
+    void setAddress(uint8_t);
+    void setPort(Serial *);
+    void setPort(QString);
+    Actor::State getState();
+    Actor::Settings getSettings();
     QStringList getComs();
     ServerActor(Serial *serial, uint8_t addr);
 

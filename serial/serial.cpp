@@ -26,19 +26,32 @@ SERIAL_EXPORT void Serial::parse()
 SERIAL_EXPORT Serial::Serial(QSerialPort* port, QObject* parent)
     : QObject(parent)
     , port(port)
-    , msgBuff(*(new QByteArray)){
+    , msgBuff(*(new QByteArray))
+{
     if (this->port == nullptr)
         throw new NullException("Argument null: Serial::Serial(null)");
     port->open(QSerialPort::ReadWrite);
 
-    qDebug() << "port->isOpen(): " << port->isOpen();
     connect(
         this->port, &QSerialPort::readyRead,
         this,       &Serial::parse
     );
 }
 
-Serial::~Serial()
+SERIAL_EXPORT Serial::Serial(QString name, QObject *parent)
+    : QObject(parent)
+    , msgBuff(*(new QByteArray))
+{
+    port = new QSerialPort(name);
+    port->open(QSerialPort::ReadWrite);
+
+    connect(
+        this->port, &QSerialPort::readyRead,
+        this,       &Serial::parse
+    );
+}
+
+SERIAL_EXPORT Serial::~Serial()
 {
     disconnect(
         this->port, &QSerialPort::readyRead,

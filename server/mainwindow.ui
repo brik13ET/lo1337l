@@ -30,7 +30,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox">
+         <widget class="QSpinBox" name="addrBox">
           <property name="font">
            <font>
             <family>Lucida Console</family>
@@ -69,6 +69,12 @@
         </item>
         <item>
          <widget class="QSlider" name="Atten1">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="maximum">
+           <number>65535</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -83,126 +89,19 @@
         </item>
         <item>
          <widget class="QSlider" name="Atten2">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="maximum">
+           <number>65535</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
         <item>
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="3" column="0">
-           <widget class="QCheckBox" name="o1_4">
-            <property name="text">
-             <string>o1_4</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QCheckBox" name="o1_1">
-            <property name="text">
-             <string>o1_1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QCheckBox" name="o1_7">
-            <property name="text">
-             <string>o1_7</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="QCheckBox" name="o1_8">
-            <property name="text">
-             <string>o1_8</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="o1_3">
-            <property name="text">
-             <string>o1_3</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QCheckBox" name="o1_5">
-            <property name="text">
-             <string>o1_5</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QCheckBox" name="o1_6">
-            <property name="text">
-             <string>o1_6</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="o1_2">
-            <property name="text">
-             <string>o1_2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="o2_1">
-            <property name="text">
-             <string>o2_1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QCheckBox" name="o2_2">
-            <property name="text">
-             <string>o2_2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="o2_3">
-            <property name="text">
-             <string>o2_3</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QCheckBox" name="o2_4">
-            <property name="text">
-             <string>o2_4</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QCheckBox" name="o2_5">
-            <property name="text">
-             <string>o2_5</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QCheckBox" name="o2_6">
-            <property name="text">
-             <string>o2_6</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QCheckBox" name="o2_7">
-            <property name="text">
-             <string>o2_7</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="1">
-           <widget class="QCheckBox" name="o2_8">
-            <property name="text">
-             <string>o2_8</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <layout class="QGridLayout" name="gridLayout"/>
         </item>
         <item>
          <widget class="QLabel" name="label_3">

@@ -87,8 +87,6 @@ uint8_t MainWindow::getAddr()
 
 void MainWindow::on_listViewComs_activated(const QModelIndex &index)
 {
-    qDebug() << __FUNCTION__;
-    qDebug() << "this: " << this;
     if (this->serial != nullptr){
         disconnect(
              serial, &Serial::rxd,
@@ -106,9 +104,6 @@ void MainWindow::on_listViewComs_activated(const QModelIndex &index)
 
     auto port = new QSerialPort(index.data().toString());
     this->serial = new Serial(port);
-
-    qDebug() << "this->serial: " << this->serial;
-    qDebug() << "QSerialPort->isOpen(): " << port->isOpen();
 
     serial->transmit(
                 Serial::Message (

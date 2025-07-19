@@ -12,6 +12,8 @@ class SERIAL_EXPORT Actor : public QThread
 public:
     // Connection, self-address
     explicit Actor(Serial*,uint8_t);
+    explicit Actor(QSerialPort*,uint8_t);
+    explicit Actor(QString,uint8_t);
     ~Actor();
 
     class SERIAL_EXPORT State {
@@ -61,14 +63,16 @@ public:
         operator QByteArray();
     };
 
-    Serial::Message handshake(Serial::Message);
-    Serial::Message getState (Serial::Message);
-    Serial::Message setSettings (Serial::Message);
+    Serial::Message handshakeMsg  (Serial::Message);
+    Serial::Message getStateMsg   (Serial::Message);
+    Serial::Message setSettingsMsg(Serial::Message);
+
+    uint8_t getAddress();
 
 protected:
 
-    const uint8_t addr;
-    Serial* const con;
+    uint8_t addr;
+    Serial* con;
     Actor::State state;
     Actor::Settings settings;
 
