@@ -6,6 +6,8 @@
 #include <QSerialPortInfo>
 
 
+SERIAL_EXPORT const Serial::Message Serial::Message::EMPTY = Message();
+
 SERIAL_EXPORT void Serial::parse()
 {
     // Recieved part of message - append it to whole buffer
@@ -73,34 +75,32 @@ SERIAL_EXPORT QSerialPort& Serial::getPort()
     return *port;
 }
 
-SERIAL_EXPORT Serial::Message::CmdTempl Serial::Message::handshake()
+SERIAL_EXPORT const Serial::Message::CmdTempl Serial::Message::handshake
 {
-    return  {
-        /*.op =  */Serial::Message::MetaOp::Read,
-        /*.cmd = */Serial::Message::Cmd::Handshake
-    };
+    /*.op =  */Serial::Message::MetaOp::Read,
+    /*.cmd = */Serial::Message::Cmd::Handshake
+};
 
-
-
-}
-
-SERIAL_EXPORT Serial::Message::CmdTempl Serial::Message::getState()
+SERIAL_EXPORT const Serial::Message::CmdTempl Serial::Message::getState
 {
-    return {
-        /*.op  = */Serial::Message::MetaOp::Read,
-        /*.cmd = */Serial::Message::Cmd::GetState
-    };
-}
+    /*.op  = */Serial::Message::MetaOp::Read,
+    /*.cmd = */Serial::Message::Cmd::GetState
+};
 
-SERIAL_EXPORT Serial::Message::CmdTempl Serial::Message::setSettings()
+SERIAL_EXPORT const Serial::Message::CmdTempl Serial::Message::setSettings
 {
-    return  {
-        /*.op = */Serial::Message::MetaOp::Write,
-        /*.cmd = */Serial::Message::Cmd::SetState
-    };
-}
+    /*.op = */Serial::Message::MetaOp::Write,
+    /*.cmd = */Serial::Message::Cmd::SetState
+};
 
-SERIAL_EXPORT Serial::Message::Message(uint8_t Address, uint8_t CmdNo, uint8_t Meta, QByteArray Data)
+SERIAL_EXPORT Serial::Message::Message()
+    : Address(0xff)
+    , Cmd(0xff)
+    , Meta(0xff)
+    , Data(QByteArray ())
+{ }
+
+Serial::Message::Message(uint8_t Address, uint8_t CmdNo, uint8_t Meta, QByteArray Data)
     : Address(Address)
     , Cmd(CmdNo)
     , Meta(Meta)
@@ -119,8 +119,7 @@ SERIAL_EXPORT Serial::Message::operator QByteArray()
     ret.append(Cmd);
     ret.append(Meta);
     ret.append((uint8_t)Data.length());
-    ret.append(Data);
-    return ret;
+    return ret + Data;
 }
 
 SERIAL_EXPORT uint8_t Serial::Message::getAddress()

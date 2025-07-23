@@ -7,7 +7,7 @@
 #include <array>
 #include <functional>
 
-class SERIAL_EXPORT Actor : public QThread
+class SERIAL_EXPORT Actor : public QObject
 {
 public:
     // Connection, self-address
@@ -18,7 +18,7 @@ public:
 
     class SERIAL_EXPORT State {
     public:
-        enum Mode {
+        enum Mode : uint8_t {
             Standard    = 0,
             Control     = 1,
             Calibration = 2,
@@ -48,8 +48,9 @@ public:
         uint16_t voltage;
 
         explicit State(QByteArray);
-        explicit State();
         operator QByteArray();
+        explicit State(Mode _mode, Parts _parts, uint16_t _temp, uint16_t _voltage, Version _ver);
+        explicit State();
     };
 
     class SERIAL_EXPORT Settings {
@@ -63,29 +64,27 @@ public:
         operator QByteArray();
     };
 
-    Serial::Message handshakeMsg  (Serial::Message);
-    Serial::Message getStateMsg   (Serial::Message);
-    Serial::Message setSettingsMsg(Serial::Message);
+    virtual Serial::Message handshakeMsg  (Serial::Message) = 0;
+    virtual Serial::Message getStateMsg   (Serial::Message) = 0;
+    virtual Serial::Message setSettingsMsg(Serial::Message) = 0;
 
     uint8_t getAddress();
 
+    void setPort(Serial *serial);
+    void setPort(QString name);
 protected:
 
     uint8_t addr;
     Serial* con;
-    Actor::State state;
-    Actor::Settings settings;
+    Actor::State* state;
+    Actor::Settings* settings;
+    void skipMsg();
 
-    void run() = 0;
+private:
     void rxd(Serial::Message);
-
-
-    // to add cmds modify lookup table (index is cmdnumber)
-    static const
-    std::array<
-        Serial::Message (Actor::*)(Serial::Message),
-        3
-    > lookupCmd ;
+    using worker = Serial::Message (Actor::*)(Serial::Message);
+    static std::vector<worker> lookupCmd;
+    bool skipMsgFlag;
 };
 
 #endif // ACTOR_H

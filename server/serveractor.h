@@ -8,20 +8,20 @@ class ServerActor : public Actor
 {
     Q_OBJECT
 public:
-    void run() override;
     void setAddress(uint8_t);
-    void setPort(Serial *);
-    void setPort(QString);
-    Actor::State getState();
+    Actor::State& getState();
     Actor::Settings getSettings();
     QStringList getComs();
     ServerActor(Serial *serial, uint8_t addr);
-
+    void setState(Actor::State);
+    Serial::Message setSettingsMsg(Serial::Message msg) override;
+    Serial::Message getStateMsg   (Serial::Message msg) override;
+    Serial::Message handshakeMsg  (Serial::Message msg) override;
 protected:
-    void rxd(Serial::Message);
 
+    void messagedEmit(Serial::Message);
 signals:
-    void recived(Serial::Message);
+    void messaged(Serial::Message);
     void newState(QByteArray);
 };
 

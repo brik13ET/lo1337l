@@ -144,6 +144,38 @@
          </widget>
         </item>
         <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QRadioButton" name="loaderRadio">
+            <property name="text">
+             <string>Loader</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="controlRadio">
+            <property name="text">
+             <string>Control</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="standartRadio">
+            <property name="text">
+             <string>Standart</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="calibrRadio">
+            <property name="text">
+             <string>Calibration</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

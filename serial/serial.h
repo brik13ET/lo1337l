@@ -22,6 +22,9 @@ public:
         uint8_t Cmd;
         uint8_t Meta;
         QByteArray Data;
+
+        SERIAL_EXPORT explicit Message();
+
     public:
 
         enum Cmd : uint8_t {
@@ -40,14 +43,21 @@ public:
             Error   = 1
         };
 
+
+        enum Direction {
+            RX, TX
+        };
+
+        enum Direction dir;
+
         struct CmdTempl {
             enum MetaOp op;
             enum Cmd cmd;
         };
 
-        SERIAL_EXPORT static CmdTempl handshake  (void);
-        SERIAL_EXPORT static CmdTempl getState   (void);
-        SERIAL_EXPORT static CmdTempl setSettings(void);
+        SERIAL_EXPORT static const CmdTempl handshake  ;
+        SERIAL_EXPORT static const CmdTempl getState   ;
+        SERIAL_EXPORT static const CmdTempl setSettings;
 
         SERIAL_EXPORT explicit Message(
             uint8_t Address,
@@ -69,6 +79,8 @@ public:
         SERIAL_EXPORT void setData(QByteArray);
 
         SERIAL_EXPORT QString toString();
+
+        SERIAL_EXPORT static const Message EMPTY;
     };
 
     explicit Serial(QSerialPort*, QObject* parent = nullptr);

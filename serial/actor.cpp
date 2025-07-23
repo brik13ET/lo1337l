@@ -1,21 +1,25 @@
 #include "actor.h"
+#include "nullexception.h"
 #include "rangeexception.h"
 
 #include <array>
 
 #include <QDebug>
 
-SERIAL_EXPORT
-const std::array<Serial::Message (Actor::*)(Serial::Message), 3>
-    Actor::lookupCmd = {{
-        &Actor::handshakeMsg,
-        &Actor::getStateMsg ,
-        &Actor::setSettingsMsg ,
-}};
+
+using worker = Serial::Message (Actor::*)(Serial::Message);
+std::vector<worker> Actor::lookupCmd = {
+    &Actor::handshakeMsg,
+    &Actor::getStateMsg,
+    &Actor::setSettingsMsg
+};
 
 SERIAL_EXPORT Actor::Actor(Serial* con, uint8_t addr)
     : addr(addr)
     , con(con)
+    , state(new State())
+    , settings(new Settings())
+    , skipMsgFlag(false)
 {
     connect(
         con, &Serial::rxd,
@@ -23,15 +27,11 @@ SERIAL_EXPORT Actor::Actor(Serial* con, uint8_t addr)
     );
 }
 
-Actor::Actor(QSerialPort * sport, uint8_t addr)
-    : addr(addr)
-    , con (new Serial(sport))
-{ }
+SERIAL_EXPORT  Actor::Actor(QSerialPort * sport, uint8_t addr)
+    : Actor(new Serial(sport), addr) { }
 
-Actor::Actor(QString nport, uint8_t addr)
-    : addr(addr)
-    , con (new Serial(nport))
-{ }
+SERIAL_EXPORT Actor::Actor(QString nport, uint8_t addr)
+    : Actor(new Serial(nport), addr) { }
 
 SERIAL_EXPORT Actor::~Actor()
 {
@@ -55,57 +55,23 @@ SERIAL_EXPORT void Actor::rxd(Serial::Message msg)
     }
 
     auto method = lookupCmd[msg.getCmdNo()];
+    if (method == nullptr)
+        return;
     Serial::Message ret = (this->*method)(msg);
-    con->transmit(ret);
+    if(!skipMsgFlag)
+        con->transmit(ret);
+    skipMsgFlag = false;
 }
 
-SERIAL_EXPORT Serial::Message Actor::handshakeMsg(Serial::Message msg)
-{
-
-    return Serial::Message (
-        msg.getAddress(),
-        Serial::Message::handshake().cmd,
-        Serial::Message::handshake().op,
-        QByteArray {}
-    );
-}
-
-SERIAL_EXPORT Serial::Message Actor::getStateMsg(Serial::Message msg)
-{
-    // Build `State` package
-    auto state = static_cast<QByteArray>(this->state);
-    msg.setData(state);
-    msg.setMeta(0);
-    msg.setCmdNo(Serial::Message::getState().cmd);
-    msg.setMeta (Serial::Message::getState().op );
-    return msg;
-}
-
-SERIAL_EXPORT Serial::Message Actor::setSettingsMsg(Serial::Message msg)
-{
-    auto pkg = msg.getData();
-
-    memcpy(
-        settings.output,
-        pkg.mid(0, sizeof(settings.output)).constData(),
-        sizeof(settings.output)
-    );
-
-
-    memcpy(
-        settings.attenuator,
-        pkg.mid(2, sizeof(settings.attenuator)).constData(),
-        sizeof(settings.attenuator)
-    );
-
-    msg.setMeta (Serial::Message::setSettings().op );
-    msg.setCmdNo(Serial::Message::setSettings().cmd);
-    return msg;
-}
 
 uint8_t Actor::getAddress()
 {
     return addr;
+}
+
+void Actor::skipMsg()
+{
+    this->skipMsgFlag = true;
 }
 
 SERIAL_EXPORT Actor::State::operator QByteArray()
@@ -120,46 +86,86 @@ SERIAL_EXPORT Actor::State::operator QByteArray()
             (parts.Atten1 << 5) |
             (parts.Atten2 << 6) |
             (parts.Res    << 7) ;
+    ret.append(mode);
     ret.append(partsBit);
-    ret.append(temp);
-    ret.append(voltage);
+//    QByteArray tempArr((char*)&temp, sizeof(temp));
+//    ret.append(tempArr);
+
+    union shortBytes {
+        uint16_t u16;
+        uint8_t  u8[2];
+    };
+    shortBytes a, b;
+    a.u16 = temp;
+    ret.append(a.u8[0]);
+    ret.append(a.u8[1]);
+    a.u16 = voltage;
+    ret.append(a.u8[0]);
+    ret.append(a.u8[1]);
+
     ret.append(ver.major);
     ret.append(ver.minor);
+
+    qDebug() << "asByte " << "rt: " << a.u16 << hex << a.u16 << dec;
+    qDebug() << "asByte " << "rv: " << b.u16 << hex << b.u16 << dec;
     return ret;
 }
 
 
 SERIAL_EXPORT Actor::State::State(QByteArray raw)
 {
-    parts.Module   = ((raw.at(0) << 0) & 1) == 1;
-    parts.PSU      = ((raw.at(0) << 1) & 1) == 1;
-    parts.ROM      = ((raw.at(0) << 2) & 1) == 1;
-    parts.TempSens = ((raw.at(0) << 3) & 1) == 1;
-    parts.VSens    = ((raw.at(0) << 4) & 1) == 1;
-    parts.Atten1   = ((raw.at(0) << 5) & 1) == 1;
-    parts.Atten2   = ((raw.at(0) << 6) & 1) == 1;
-    parts.Res      = ((raw.at(0) << 7) & 1) == 1;
-    temp      = raw.at(1);
-    voltage   = raw.at(2);
-    ver.major = raw.at(3);
-    ver.minor = raw.at(4);
+    mode = (Actor::State::Mode)raw.at(0);
+    parts.Module   = (raw.at(1) & (1 << 0)) != 0;
+    parts.PSU      = (raw.at(1) & (1 << 1)) != 0;
+    parts.ROM      = (raw.at(1) & (1 << 2)) != 0;
+    parts.TempSens = (raw.at(1) & (1 << 3)) != 0;
+    parts.VSens    = (raw.at(1) & (1 << 4)) != 0;
+    parts.Atten1   = (raw.at(1) & (1 << 5)) != 0;
+    parts.Atten2   = (raw.at(1) & (1 << 6)) != 0;
+    parts.Res      = (raw.at(1) & (1 << 7)) != 0;
+    union shortBytes {
+        uint16_t u16;
+        uint8_t  u8[2];
+    };
+
+    shortBytes a, b;
+    a.u8[0] = raw.at(2);
+    a.u8[1] = raw.at(3);
+    b.u8[0] = raw.at(4);
+    b.u8[1] = raw.at(5);
+    temp      = a.u16;
+    voltage   = b.u16;
+    ver.major = raw.at(6);
+    ver.minor = raw.at(7);
+
+
+    qDebug() << "asObj " << "temp: " << temp;
+    qDebug() << "asObj " << "voltage: " << voltage;
 }
 
-SERIAL_EXPORT Actor::State::State()
-{
-    parts.Module   = 1;
-    parts.PSU      = 1;
-    parts.ROM      = 1;
-    parts.TempSens = 1;
-    parts.VSens    = 1;
-    parts.Atten1   = 1;
-    parts.Atten2   = 1;
-    parts.Res      = 1;
-    temp      = 27*2;
-    voltage   = 50;
-    ver.major = 1;
-    ver.minor = 0;
-}
+SERIAL_EXPORT Actor::State::State(
+    Mode _mode       ,
+    Parts _parts     ,
+    uint16_t _temp   ,
+    uint16_t _voltage,
+    Version _ver
+)
+    : mode(_mode)
+    , parts(_parts)
+    , temp(_temp)
+    , voltage(_voltage)
+    , ver(_ver)
+{ }
+
+Actor::State::State()
+    : State(
+          Mode::Standard,
+          {1,1,1,1,1,1,1,1},
+          0,
+          0,
+          {0, 0}
+    )
+{ }
 
 SERIAL_EXPORT Actor::Settings::operator QByteArray()
 {
@@ -188,4 +194,29 @@ SERIAL_EXPORT Actor::Settings::Settings()
     for (int i = 0; i < sizeof(attenuator)/sizeof(attenuator[0]); ++i) {
         attenuator[i] = 0;
     }
+}
+
+
+SERIAL_EXPORT void Actor::setPort(Serial * serial)
+{
+    if (con->getPort().portName().compare(serial->getPort().portName()) == 0)
+        return;
+    if (con != nullptr)
+    {
+        con->getPort().close();
+        delete con;
+        con = nullptr;
+    }
+    if (!serial->getPort().isOpen())
+    {
+        throw new NullException("New serial is not open");
+    }
+    con = serial;
+}
+
+SERIAL_EXPORT void Actor::setPort(QString name)
+{
+    if (con->getPort().portName() == name)
+        return;
+    setPort(new Serial(name));
 }

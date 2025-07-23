@@ -1,6 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
-
+#pragma once
 #include "serveractor.h"
 
 #include <QMainWindow>
@@ -18,7 +16,6 @@ public:
     ~MainWindow();
 
 protected slots:
-    void stateChanged(QByteArray);
     void addressChanged(const QString &);
     void setCom(const QModelIndex &index);
     void attenUpdate(Serial::Message);
@@ -27,5 +24,6 @@ private:
     Ui::MainWindow *ui;
 
     void showMsg(Serial::Message);
+    void setModelState();
+    void stateChanged();
 };
-#endif // MAINWINDOW_H

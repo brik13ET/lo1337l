@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "clientactor.h"
+
 #include <QMainWindow>
 #include <QStringListModel>
 #include <serial.h>
@@ -13,26 +15,19 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-
-    void updateComs();
-    uint8_t getAddr();
-private slots:
     void on_listViewComs_activated(const QModelIndex &index);
-    void on_serial_rxd(Serial::Message);
-    void request_state(bool checked = false);
 
 private:
+    ClientActor* actor;
     void on_anten1_value(int);
     void on_anten2_value(int);
-    void set_settings_msg();
-    Serial* serial;
     Ui::MainWindow *ui;
-    QStringListModel* strComs;
-    QStringListModel* strMsg;
-    Actor::Settings settings;
+    void connectCom(QString);
+    void msg(Serial::Message);
+    void update(Actor::State);
+
 };
 #endif // MAINWINDOW_H
